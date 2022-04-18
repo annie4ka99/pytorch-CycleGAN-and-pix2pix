@@ -15,10 +15,12 @@ from data.base_dataset import BaseDataset
 import torchvision.transforms as transforms
 from data.image_folder import make_dataset
 from PIL import Image
+import numpy as np
 import random
+import os
 
 
-class Ade(BaseDataset):
+class AdeDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -77,11 +79,11 @@ class Ade(BaseDataset):
         # flip
         if not (self.opt.phase == "test" or self.opt.no_flip):
             if random.random() < 0.5:
-                image = TR.functional.hflip(image)
+                image = transforms.functional.hflip(image)
         # to tensor
-        image = TR.functional.to_tensor(image)
+        image = transforms.functional.to_tensor(image)
         # normalize
-        image = TR.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        image = transforms.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         return image
 
     def transform_a(self, image):
@@ -92,11 +94,11 @@ class Ade(BaseDataset):
         # flip
         if not (self.opt.phase == "test" or self.opt.no_flip):
             if random.random() < 0.5:
-                image = TR.functional.hflip(image)
+                image = transforms.functional.hflip(image)
         # to tensor
-        image = TR.functional.to_tensor(image)
+        image = transforms.functional.to_tensor(image)
         # normalize
-        image = TR.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        image = transforms.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         return image
 
     def __getitem__(self, index):
