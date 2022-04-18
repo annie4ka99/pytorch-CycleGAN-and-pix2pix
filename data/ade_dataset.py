@@ -50,7 +50,6 @@ class AdeDataset(BaseDataset):
         """
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
-        self.opt.crop_size = 1024
         self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')  # create a path '/path/to/data/trainA'
         self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')  # create a path '/path/to/data/trainB'
 
@@ -62,44 +61,52 @@ class AdeDataset(BaseDataset):
     def transform_b(self, image):
         width, height = image.size
 
+        # resize
         new_width, new_height = width, height
-        if height >= width != self.opt.crop_size:
-            new_width = self.opt.crop_size
+        if height >= width != self.opt.load_size:
+            new_width = self.opt.load_size
             new_height = int((new_width / width) * height)
             image = transforms.functional.resize(image, (new_height, new_width), Image.BICUBIC)
-        elif width >= height != self.opt.crop_size:
-            new_height = self.opt.crop_size
+        elif width >= height != self.opt.load_size:
+            new_height = self.opt.load_size
             new_width = int((new_height / height) * width)
             image = transforms.functional.resize(image, (new_height, new_width), Image.BICUBIC)
 
         # crop
-        crop_x = random.randint(0, np.maximum(0, new_width - self.opt.crop_size))
-        crop_y = random.randint(0, np.maximum(0, new_height - self.opt.crop_size))
-        image = image.crop((crop_x, crop_y, crop_x + self.opt.crop_size, crop_y + self.opt.crop_size))
+        if not (new_width == self.opt.crop_size and new_height == self.opt.crop_size):
+            crop_x = random.randint(0, np.maximum(0, new_width - self.opt.crop_size))
+            crop_y = random.randint(0, np.maximum(0, new_height - self.opt.crop_size))
+            image = image.crop((crop_x, crop_y, crop_x + self.opt.crop_size, crop_y + self.opt.crop_size))
+
         # flip
         if not (self.opt.phase == "test" or self.opt.no_flip):
             if random.random() < 0.5:
                 image = transforms.functional.hflip(image)
+
         # to tensor
         image = transforms.functional.to_tensor(image)
+
         # normalize
         image = transforms.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+
         return image
 
     def transform_a(self, image):
-        width, height = image.size
-        assert width == 512 and height == 512
-        image = transforms.functional.resize(image, (self.opt.crop_size, self.opt.crop_size), Image.BICUBIC)
-
-        # flip
-        if not (self.opt.phase == "test" or self.opt.no_flip):
-            if random.random() < 0.5:
-                image = transforms.functional.hflip(image)
-        # to tensor
-        image = transforms.functional.to_tensor(image)
-        # normalize
-        image = transforms.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        return image
+        return self.transform_b(image)
+        # width, height = image.size
+        # assert width == 512 and height == 512
+        # if width != opt.load_size:
+        #     image = transforms.functional.resize(image, (self.opt.load_size, self.opt.load_size), Image.BICUBIC)
+        #
+        # # flip
+        # if not (self.opt.phase == "test" or self.opt.no_flip):
+        #     if random.random() < 0.5:
+        #         image = transforms.functional.hflip(image)
+        # # to tensor
+        # image = transforms.functional.to_tensor(image)
+        # # normalize
+        # image = transforms.functional.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        # return image
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
